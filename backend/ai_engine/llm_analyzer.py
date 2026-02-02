@@ -20,7 +20,7 @@ class LLMAnalyzer:
 
     def analyze_artifacts(self, artifacts: Dict) -> Dict:
         """
-        Send scraped artifacts to LLM for comprehensive threat analysis
+        Send scraped artifacts to LLM (Gemini or OpenRouter) for comprehensive threat analysis
         """
         try:
             # Prepare context (truncate if too large)
@@ -50,27 +50,55 @@ class LLMAnalyzer:
             }}
             """
             
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            data = {
-                "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.3 # Low temperature for factual analysis
-            }
-            
-            response = requests.post(self.api_url, headers=headers, json=data, timeout=30)
-            
-            if response.status_code == 200:
-                result = response.json()
-                content = result['choices'][0]['message']['content']
-                # Parse JSON from LLM response
-                return self._parse_llm_response(content)
+            # GOOGLE GEMINI API
+            if self.api_key.startswith("AIza"):
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+                data = {
+                    "contents": [{
+                        "parts": [{"text": prompt}]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.3,
+                        "responseMimeType": "application/json"
+                    }
+                }
+                response = requests.post(url, json=data, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    try:
+                        content = result['candidates'][0]['content']['parts'][0]['text']
+                        return self._parse_llm_response(content)
+                    except KeyError:
+                        logger.error(f"Gemini response structure error: {result}")
+                        return {"error": "AI Analysis failed to parse response"}
+                else:
+                    logger.error(f"Gemini API Error: {response.text}")
+                    return {"error": f"AI Analysis Service Unavailable: {response.status_code}"}
+
+            # OPENROUTER FALLBACK
             else:
-                logger.error(f"LLM API Error: {response.text}")
-                return {"error": "AI Analysis Service Unavailable"}
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                data = {
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3
+                }
+                
+                response = requests.post(self.api_url, headers=headers, json=data, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    content = result['choices'][0]['message']['content']
+                    return self._parse_llm_response(content)
+                else:
+                    logger.error(f"LLM API Error: {response.text}")
+                    return {"error": "AI Analysis Service Unavailable"}
+                
                 
         except Exception as e:
             logger.error(f"AI Engine Error: {str(e)}")

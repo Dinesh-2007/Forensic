@@ -36,13 +36,12 @@ def get_privilege_status() -> Dict:
             "elevation_method": "UAC (User Account Control)" if os.name == 'nt' else "sudo"
         },
         "instructions": (
-            "Your WinSentinel is running without admin privileges.\n"
             "To enable full forensic scraping capabilities:\n\n"
             "1. Close all WinSentinel windows\n"
             "2. Right-click on Command Prompt/PowerShell\n"
             "3. Select 'Run as Administrator'\n"
             "4. Navigate to the backend folder:\n"
-            "   cd C:\\Users\\dines\\OneDrive\\Desktop\\foren\\backend\n"
+            f"   cd {os.getcwd()}\n"
             "5. Start the server:\n"
             "   python main.py\n\n"
             "Then refresh your browser and try Live Scraping again."

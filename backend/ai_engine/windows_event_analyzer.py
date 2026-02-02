@@ -44,8 +44,39 @@ class WindowsEventLogAnalyzer:
             if len(self.df) == 0:
                 return {'error': 'Empty dataset'}
             
-            # Parse timestamp
-            self.df['Timestamp'] = pd.to_datetime(self.df['Timestamp'])
+            # Parse timestamp with flexible format handling
+            # Normalize timestamp column
+            timestamp_cols = ['TimeCreated', 'Date', 'Time', 'timestamp', 'date']
+            for col in timestamp_cols:
+                if 'Timestamp' not in self.df.columns and col in self.df.columns:
+                    self.df.rename(columns={col: 'Timestamp'}, inplace=True)
+                    break
+            
+            # Parse timestamp with flexible format handling
+            if 'Timestamp' not in self.df.columns:
+                 return {'error': f'Missing "Timestamp" column. Found: {list(self.df.columns)}'}
+                 
+            self.df['Timestamp'] = pd.to_datetime(self.df['Timestamp'], errors='coerce')
+
+            # Normalize other critical columns
+            column_mappings = {'Severity': 'Level', 'Type': 'Level', 'Provider': 'Source'}
+            self.df.rename(columns=column_mappings, inplace=True)
+            
+            # Ensure critical columns exist
+            if 'Level' not in self.df.columns:
+                self.df['Level'] = 'Information' # Default
+            if 'Source' not in self.df.columns:
+                self.df['Source'] = 'Unknown Source'
+            if 'EventID' not in self.df.columns:
+                self.df['EventID'] = '0'
+            if 'Message' not in self.df.columns:
+                self.df['Message'] = ''
+            if 'UserID' not in self.df.columns:
+                self.df['UserID'] = 'N/A'
+            if 'Computer' not in self.df.columns:
+                self.df['Computer'] = 'Unknown'
+            
+
             
             # Run analysis modules
             results = {
@@ -153,6 +184,9 @@ class WindowsEventLogAnalyzer:
     def _analyze_timeline(self) -> Dict:
         """Analyze event distribution over time"""
         daily_counts = self.df.groupby(self.df['Timestamp'].dt.date).size()
+        # Convert date keys to strings for JSON serialization
+        daily_counts.index = daily_counts.index.astype(str)
+        
         hourly_counts = self.df.groupby(self.df['Timestamp'].dt.floor('h')).size()
         
         return {

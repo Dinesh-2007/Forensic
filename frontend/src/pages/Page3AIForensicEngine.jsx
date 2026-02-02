@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, Download, AlertTriangle, TrendingUp, Gauge } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8001/api';
+const API_BASE = 'http://localhost:5003/api';
 
 export default function Page3AIForensicEngine() {
   const [analysisResults, setAnalysisResults] = useState(null);
@@ -100,8 +100,8 @@ export default function Page3AIForensicEngine() {
             onClick={handleRunAnalysis}
             disabled={analyzing}
             className={`px-6 py-2 rounded font-semibold transition ${analyzing
-                ? 'bg-gray-600 cursor-not-allowed'
-                : 'bg-cyan-600 hover:bg-cyan-700'
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-cyan-600 hover:bg-cyan-700'
               }`}
           >
             {analyzing ? 'Analyzing...' : 'Run Analysis'}
@@ -179,10 +179,10 @@ export default function Page3AIForensicEngine() {
                 key={idx}
                 onClick={() => handleEventClick(idx)}
                 className={`p-3 rounded cursor-pointer border-l-4 transition ${event.severity === 'red'
-                    ? 'border-red-500 bg-red-900/20'
-                    : event.severity === 'yellow'
-                      ? 'border-yellow-500 bg-yellow-900/20'
-                      : 'border-green-500 bg-green-900/20'
+                  ? 'border-red-500 bg-red-900/20'
+                  : event.severity === 'yellow'
+                    ? 'border-yellow-500 bg-yellow-900/20'
+                    : 'border-green-500 bg-green-900/20'
                   }`}
               >
                 <div className="flex items-center justify-between">
@@ -191,8 +191,8 @@ export default function Page3AIForensicEngine() {
                     <p className="text-sm text-gray-400">{event.timestamp}</p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded font-semibold ${event.severity === 'red' ? 'bg-red-600' :
-                      event.severity === 'yellow' ? 'bg-yellow-600' :
-                        'bg-green-600'
+                    event.severity === 'yellow' ? 'bg-yellow-600' :
+                      'bg-green-600'
                     }`}>
                     {event.severity.toUpperCase()}
                   </span>
@@ -236,9 +236,9 @@ export default function Page3AIForensicEngine() {
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(parameterBreakdown).map(([param, data]) => (
               <div key={param} className={`p-4 rounded border-l-4 ${data.risk === 'critical' ? 'border-red-500 bg-red-900/20' :
-                  data.risk === 'high' ? 'border-orange-500 bg-orange-900/20' :
-                    data.risk === 'medium' ? 'border-yellow-500 bg-yellow-900/20' :
-                      'border-green-500 bg-green-900/20'
+                data.risk === 'high' ? 'border-orange-500 bg-orange-900/20' :
+                  data.risk === 'medium' ? 'border-yellow-500 bg-yellow-900/20' :
+                    'border-green-500 bg-green-900/20'
                 }`}>
                 <p className="font-semibold capitalize">{param.replace(/_/g, ' ')}</p>
                 <p className="text-2xl font-bold mt-2">{data.alerts}</p>

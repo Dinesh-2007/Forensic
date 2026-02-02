@@ -8,7 +8,7 @@ import Page1LiveScraping from './pages/Page1LiveScraping';
 import Page2DatasetManagement from './pages/Page2DatasetManagement';
 import Page3AIForensicEngine from './pages/Page3AIForensicEngine';
 
-const API_BASE = 'http://localhost:8001/api';
+const API_BASE = 'http://localhost:5003/api';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');

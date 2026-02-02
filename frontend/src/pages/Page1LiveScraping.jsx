@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Play, AlertTriangle, Lock, CheckCircle, BarChart3, PieChart, TrendingUp, Shield } from 'lucide-react';
+import { Play, AlertTriangle, Lock, CheckCircle, BarChart3, PieChart, TrendingUp, Shield, Activity } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8001/api';
+const API_BASE = 'http://localhost:5003/api';
 
 export default function Page1LiveScraping() {
   const [scrapeConfig, setScrapeConfig] = useState({
@@ -248,7 +248,7 @@ export default function Page1LiveScraping() {
 
       {/* Visualizations - Only show if data exists */}
       {/* 🌳 REAL PROCESS TREE */}
-      {scrapedData.artifacts?.processes?.root_processes && (
+      {scrapedData && scrapedData.artifacts?.processes?.root_processes && (
         <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
           <h3 className="text-lg font-semibold mb-4 flex items-center text-cyan-400">
             <Activity className="h-5 w-5 mr-2" />
@@ -265,7 +265,7 @@ export default function Page1LiveScraping() {
       )}
 
       {/* 📜 REAL EVENT LOGS */}
-      {scrapedData.artifacts?.event_logs?.critical_events && (
+      {scrapedData && scrapedData.artifacts?.event_logs?.critical_events && (
         <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
           <h3 className="text-lg font-semibold mb-4 flex items-center text-yellow-400">
             <Shield className="h-5 w-5 mr-2" />
