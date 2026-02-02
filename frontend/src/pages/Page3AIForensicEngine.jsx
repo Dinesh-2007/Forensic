@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, Download, AlertTriangle, TrendingUp, Gauge } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5003/api';
+const API_BASE = 'http://localhost:5006/api';
 
 export default function Page3AIForensicEngine() {
   const [analysisResults, setAnalysisResults] = useState(null);
@@ -253,24 +253,147 @@ export default function Page3AIForensicEngine() {
       {analysisResults && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Analysis Summary</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-700 p-4 rounded">
               <p className="text-gray-400 text-sm">Anomalies Detected</p>
-              <p className="text-2xl font-bold text-cyan-400">{analysisResults.anomalies_detected}</p>
+              <p className="text-2xl font-bold text-cyan-400">{analysisResults.anomalies_detected || 0}</p>
             </div>
             <div className="bg-gray-700 p-4 rounded">
-              <p className="text-gray-400 text-sm">Attack Sequences</p>
-              <p className="text-2xl font-bold text-orange-400">{analysisResults.attack_sequences}</p>
+              <p className="text-gray-400 text-sm">Overall Risk</p>
+              <p className="text-2xl font-bold text-orange-400">{analysisResults.overall_risk || 'N/A'}</p>
             </div>
             <div className="bg-gray-700 p-4 rounded">
               <p className="text-gray-400 text-sm">Risk Score</p>
-              <p className="text-2xl font-bold text-red-400">{analysisResults.risk_score.toFixed(1)}</p>
+              <p className="text-2xl font-bold text-red-400">{analysisResults.risk_score?.toFixed(1) || 0}</p>
             </div>
             <div className="bg-gray-700 p-4 rounded">
-              <p className="text-gray-400 text-sm">Timestamp</p>
-              <p className="text-xs font-mono text-gray-300 mt-2">{analysisResults.timestamp}</p>
+              <p className="text-gray-400 text-sm">Dataset Type</p>
+              <p className="text-sm font-mono text-gray-300 mt-2">{analysisResults.dataset_type || 'Generic'}</p>
             </div>
           </div>
+
+          {/* Recommendations */}
+          {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold mb-2 text-yellow-400">Recommendations</h3>
+              <ul className="list-disc list-inside space-y-1 text-gray-300">
+                {analysisResults.recommendations.map((rec, idx) => (
+                  <li key={idx} className="text-sm">{rec}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* AI Insights Panel (Gemini) */}
+      {analysisResults?.ai_insights && Object.keys(analysisResults.ai_insights).length > 0 && (
+        <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-lg p-6 border border-purple-500/50">
+          <div className="flex items-center mb-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-3">
+              <span className="text-white font-bold text-sm">AI</span>
+            </div>
+            <h2 className="text-xl font-semibold text-purple-300">Gemini AI Threat Intelligence</h2>
+          </div>
+
+          {/* Executive Summary */}
+          {analysisResults.ai_insights.executive_summary && (
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Executive Summary</h3>
+              <p className="text-gray-200">{analysisResults.ai_insights.executive_summary}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Threat Level Badge */}
+            {analysisResults.ai_insights.threat_level && (
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2">Threat Level</h3>
+                <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg ${analysisResults.ai_insights.threat_level === 'CRITICAL' ? 'bg-red-600 text-white' :
+                    analysisResults.ai_insights.threat_level === 'HIGH' ? 'bg-orange-600 text-white' :
+                      analysisResults.ai_insights.threat_level === 'MEDIUM' ? 'bg-yellow-600 text-black' :
+                        'bg-green-600 text-white'
+                  }`}>
+                  {analysisResults.ai_insights.threat_level}
+                </span>
+              </div>
+            )}
+
+            {/* AI Risk Score */}
+            {analysisResults.ai_insights.risk_score !== undefined && (
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2">AI Risk Assessment</h3>
+                <div className="flex items-center">
+                  <div className="flex-1 h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${analysisResults.ai_insights.risk_score > 70 ? 'bg-red-500' :
+                          analysisResults.ai_insights.risk_score > 40 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                      style={{ width: `${analysisResults.ai_insights.risk_score}%` }}
+                    ></div>
+                  </div>
+                  <span className="ml-3 text-xl font-bold text-white">{analysisResults.ai_insights.risk_score}%</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Key Concerns */}
+          {analysisResults.ai_insights.key_concerns && analysisResults.ai_insights.key_concerns.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-red-400 mb-2">⚠️ Key Concerns</h3>
+              <ul className="space-y-2">
+                {analysisResults.ai_insights.key_concerns.map((concern, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    <span className="text-gray-300">{concern}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Attack Indicators (MITRE) */}
+          {analysisResults.ai_insights.attack_indicators && analysisResults.ai_insights.attack_indicators.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-orange-400 mb-2">🎯 MITRE ATT&CK Indicators</h3>
+              <div className="flex flex-wrap gap-2">
+                {analysisResults.ai_insights.attack_indicators.map((indicator, idx) => (
+                  <span key={idx} className="bg-orange-900/50 border border-orange-500 px-3 py-1 rounded text-sm">
+                    <span className="font-mono text-orange-300">{indicator.technique}</span>
+                    <span className="text-gray-400 ml-2">{indicator.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Recommendations */}
+          {analysisResults.ai_insights.recommendations && analysisResults.ai_insights.recommendations.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-green-400 mb-2">✅ AI Recommendations</h3>
+              <ul className="space-y-2">
+                {analysisResults.ai_insights.recommendations.map((rec, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center mr-2 flex-shrink-0 text-xs font-bold">{idx + 1}</span>
+                    <span className="text-gray-300">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Investigation Priorities */}
+          {analysisResults.ai_insights.investigation_priorities && analysisResults.ai_insights.investigation_priorities.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-400 mb-2">🔍 Investigation Priorities</h3>
+              <ol className="list-decimal list-inside space-y-1 text-gray-300">
+                {analysisResults.ai_insights.investigation_priorities.map((priority, idx) => (
+                  <li key={idx}>{priority}</li>
+                ))}
+              </ol>
+            </div>
+          )}
         </div>
       )}
 

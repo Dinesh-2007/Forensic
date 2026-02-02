@@ -53,16 +53,22 @@ anomaly_detector = AnomalyDetector()
 sequence_analyzer = SequenceAnalyzer()
 event_analyzer = WindowsEventLogAnalyzer()
 
-# LLM Configuration (Google Gemini)
-API_KEY = "AIzaSyC8KgZNHkzaUVPJ1IXIFVaLdgKBFp4PN6Y"
-llm_engine = LLMAnalyzer(API_KEY)
+# LLM Configuration (Bytez + Google Gemini fallback)
+GEMINI_API_KEY = "AIzaSyC8KgZNHkzaUVPJ1IXIFVaLdgKBFp4PN6Y"
+BYTEZ_API_KEY = "c6af5ded5c1bd1fdbb786ddcb0474d68"
+llm_engine = LLMAnalyzer(api_key=GEMINI_API_KEY, bytez_key=BYTEZ_API_KEY)
 
-# Global State to store latest results and avoid dummy data
+import persistence
+
+# Initialize Database on Import (or better on startup, but this ensures it exists)
+persistence.init_db()
+
+# Global State - Loaded from Database
 GLOBAL_STATE = {
-    "latest_analysis": None,
-    "last_scrape_results": None,
-    "chain_of_custody": [],
-    "dashboard_stats": {
+    "latest_analysis": persistence.load_state_key("latest_analysis"),
+    "last_scrape_results": persistence.load_state_key("last_scrape_results"),
+    "chain_of_custody": persistence.get_chain_of_custody(),
+    "dashboard_stats": persistence.load_state_key("dashboard_stats", default={
         "total_alerts": 0,
         "critical_threats": 0,
         "systems_monitored": 1,
@@ -72,7 +78,7 @@ GLOBAL_STATE = {
             "reconnaissance": 0,
             "persistence": 0
         }
-    }
+    })
 }
 
 # Define request/response models
@@ -106,6 +112,47 @@ async def health_check():
         "status": "online",
         "version": "1.2.0",
         "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/api/dashboard/stats")
+async def get_dashboard_stats():
+    """Get dashboard statistics from persistence"""
+    # Get stats from persistence
+    stats = persistence.load_state_key("dashboard_stats", default={
+        "total_alerts": 0,
+        "critical_threats": 0,
+        "systems_monitored": 1,
+        "alert_breakdown": {
+            "brute_force": 0,
+            "malware": 0,
+            "reconnaissance": 0,
+            "persistence": 0
+        }
+    })
+    
+    # Get latest analysis if available
+    latest_analysis = persistence.load_state_key("latest_analysis")
+    
+    # Get scrape results
+    last_scrape = persistence.load_state_key("last_scrape_results")
+    
+    # Get chain of custody count
+    coc = persistence.get_chain_of_custody()
+    
+    return {
+        "stats": stats,
+        "latest_analysis": {
+            "risk_score": latest_analysis.get("risk_score", 0) if latest_analysis else 0,
+            "status": latest_analysis.get("status", "No analysis yet") if latest_analysis else "No analysis yet",
+            "timestamp": latest_analysis.get("timestamp") if latest_analysis else None
+        },
+        "last_scrape": {
+            "case_id": last_scrape.get("case_id") if last_scrape else None,
+            "timestamp": last_scrape.get("timestamp") if last_scrape else None,
+            "artifact_count": len(last_scrape.get("artifacts", {})) if last_scrape else 0
+        },
+        "chain_of_custody_count": len(coc),
+        "datasets_count": len([f for f in os.listdir("./datasets") if f.endswith('.csv')]) if os.path.exists("./datasets") else 0
     }
 
 # ========== PAGE 1: LIVE SCRAPING ==========
@@ -257,6 +304,7 @@ async def start_live_scrape(request: ScrapeRequest):
         
         # Update Global State
         GLOBAL_STATE["last_scrape_results"] = results
+        persistence.save_scrape(results)
         
         # Update Dashboard Stats based on findings
         findings_count = len(risk_report.get("findings", []))
@@ -276,6 +324,8 @@ async def start_live_scrape(request: ScrapeRequest):
                 GLOBAL_STATE["dashboard_stats"]["alert_breakdown"]["reconnaissance"] += 1
             else:
                 GLOBAL_STATE["dashboard_stats"]["alert_breakdown"]["brute_force"] += 1 # Default bucket
+        
+        persistence.save_state_key("dashboard_stats", GLOBAL_STATE["dashboard_stats"])
                 
         return results
     except HTTPException:
@@ -486,6 +536,33 @@ async def run_ai_analysis(dataset_name: str):
             threat_count = threats.get('total_threats_identified', 0)
             risk_score = min(100, (error_percent * 0.5) + (threat_count * 5))
             
+            # --- GEMINI AI ANALYSIS ---
+            ai_insights = {}
+            try:
+                # Prepare summary for AI
+                dataset_summary = {
+                    "total_events": metadata.get('total_events', 0),
+                    "date_range": metadata.get('date_range', {}),
+                    "unique_sources": metadata.get('unique_sources', 0),
+                    "severity_distribution": severity.get('distribution', {}),
+                    "error_count": severity.get('error_count', 0),
+                    "warning_count": severity.get('warning_count', 0),
+                    "threat_count": threat_count,
+                    "anomalies_detected": anomalies.get('anomalies_detected', 0),
+                    "sample_threats": threats.get('threats', [])[:5]  # First 5 threats
+                }
+                
+                ai_result = llm_engine.analyze_dataset(dataset_summary)
+                if 'error' not in ai_result:
+                    ai_insights = ai_result
+                    # Update risk score if AI suggests higher
+                    if ai_result.get('risk_score', 0) > risk_score:
+                        risk_score = ai_result['risk_score']
+                else:
+                    logger.warning(f"AI analysis failed: {ai_result.get('error')}")
+            except Exception as e:
+                logger.warning(f"AI analysis exception: {str(e)}")
+            
             result = {
                 "status": "analysis_complete",
                 "dataset_type": "Windows_Event_Log",
@@ -497,9 +574,11 @@ async def run_ai_analysis(dataset_name: str):
                 "recommendations": analysis_results.get('recommendations', []),
                 "risk_score": round(risk_score, 1),
                 "overall_risk": threats.get('overall_risk', 'LOW'),
+                "ai_insights": ai_insights,
                 "timestamp": datetime.utcnow().isoformat()
             }
             GLOBAL_STATE["latest_analysis"] = result
+            persistence.save_analysis(dataset_name, result)
             return result
         else:
             # Use generic anomaly detection
@@ -516,6 +595,7 @@ async def run_ai_analysis(dataset_name: str):
                 "timestamp": datetime.utcnow().isoformat()
             }
             GLOBAL_STATE["latest_analysis"] = result
+            persistence.save_analysis(dataset_name, result)
             return result
     
     except Exception as e:
@@ -682,12 +762,19 @@ async def export_forensic_report(request: ExportRequest):
         # In real scenario calculate actual file hash, here we mock the hash calc if the file isn't easily accessible
         # Since export_manager handles file, we assume we get path.
         # Just creating a record here.
-        GLOBAL_STATE["chain_of_custody"].append({
-            "export_date": datetime.utcnow().isoformat(),
-            "file_name": os.path.basename(file_path),
-            "recipient": request.investigator_name,
-            "file_hash": "Pending Verify"
-        })
+        entry = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "description": f"Exported {request.export_type} report",
+            "user": request.investigator_name,
+            "hash": "Pending Verify", # In real scenario calculate actual file hash
+            "metadata": {
+                "file_name": os.path.basename(file_path),
+                "case_id": request.case_id,
+                "file_path": file_path
+            }
+        }
+        GLOBAL_STATE["chain_of_custody"].append(entry)
+        persistence.add_chain_of_custody_entry(entry)
         
         return {
             "status": "export_ready",
@@ -727,4 +814,4 @@ elif os.path.exists(frontend_src_path):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5003)
+    uvicorn.run(app, host="0.0.0.0", port=5006)

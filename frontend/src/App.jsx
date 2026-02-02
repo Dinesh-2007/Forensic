@@ -8,7 +8,7 @@ import Page1LiveScraping from './pages/Page1LiveScraping';
 import Page2DatasetManagement from './pages/Page2DatasetManagement';
 import Page3AIForensicEngine from './pages/Page3AIForensicEngine';
 
-const API_BASE = 'http://localhost:5003/api';
+const API_BASE = 'http://localhost:5006/api';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -176,6 +176,42 @@ export default function App() {
 }
 
 function Dashboard({ setCurrentPage }) {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/dashboard/stats`);
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimestamp = (ts) => {
+    if (!ts) return 'Never';
+    const date = new Date(ts);
+    return date.toLocaleString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+      </div>
+    );
+  }
+
+  const stats = dashboardData?.stats || {};
+  const latestAnalysis = dashboardData?.latest_analysis || {};
+  const lastScrape = dashboardData?.last_scrape || {};
+
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
@@ -214,32 +250,77 @@ function Dashboard({ setCurrentPage }) {
         <MetricCard
           icon={<Shield className="text-emerald-400" />}
           label="Security Status"
-          value="SECURE"
-          sub="No active threats"
-          trend="+12%"
-          trendUp={true}
+          value={latestAnalysis.risk_score > 50 ? "AT RISK" : "SECURE"}
+          sub={latestAnalysis.risk_score > 0 ? `Risk Score: ${latestAnalysis.risk_score}%` : "No active threats"}
+          trend={latestAnalysis.risk_score > 50 ? "High" : "+12%"}
+          trendUp={latestAnalysis.risk_score <= 50}
         />
         <MetricCard
           icon={<Database className="text-blue-400" />}
-          label="Artifacts Indexed"
-          value="24.8K"
-          sub="Total records"
-          trend="+5%"
+          label="Datasets Loaded"
+          value={dashboardData?.datasets_count || 0}
+          sub="Evidence files"
+          trend={`${dashboardData?.chain_of_custody_count || 0} exports`}
           trendUp={true}
         />
         <MetricCard
           icon={<BrainCircuit className="text-purple-400" />}
           label="AI Confidence"
-          value="98.2%"
+          value={latestAnalysis.status === "analysis_complete" ? "98.2%" : "Pending"}
           sub="Model accuracy"
-          trend="Stable"
+          trend={latestAnalysis.timestamp ? "Analyzed" : "Waiting"}
         />
         <MetricCard
           icon={<Activity className="text-orange-400" />}
-          label="Active Probes"
-          value="4"
-          sub="Running daemons"
+          label="Total Alerts"
+          value={stats.total_alerts || 0}
+          sub={`${stats.critical_threats || 0} critical`}
         />
+      </div>
+
+      {/* Alert Breakdown + Recent Activity Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Alert Breakdown */}
+        <div className="glass-panel p-6 rounded-2xl">
+          <h3 className="text-lg font-semibold text-white mb-4">Alert Breakdown</h3>
+          <div className="space-y-4">
+            <AlertBar label="Brute Force" value={stats.alert_breakdown?.brute_force || 0} color="bg-red-500" />
+            <AlertBar label="Malware" value={stats.alert_breakdown?.malware || 0} color="bg-orange-500" />
+            <AlertBar label="Reconnaissance" value={stats.alert_breakdown?.reconnaissance || 0} color="bg-yellow-500" />
+            <AlertBar label="Persistence" value={stats.alert_breakdown?.persistence || 0} color="bg-purple-500" />
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="glass-panel p-6 rounded-2xl">
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            <ActivityItem
+              icon={<Laptop className="h-4 w-4 text-cyan-400" />}
+              title="Last Scrape"
+              subtitle={lastScrape.case_id ? `Case: ${lastScrape.case_id}` : "No scrapes yet"}
+              time={formatTimestamp(lastScrape.timestamp)}
+            />
+            <ActivityItem
+              icon={<BrainCircuit className="h-4 w-4 text-purple-400" />}
+              title="Last Analysis"
+              subtitle={latestAnalysis.status || "No analysis yet"}
+              time={formatTimestamp(latestAnalysis.timestamp)}
+            />
+            <ActivityItem
+              icon={<Database className="h-4 w-4 text-blue-400" />}
+              title="Datasets"
+              subtitle={`${dashboardData?.datasets_count || 0} files loaded`}
+              time="Ready"
+            />
+            <ActivityItem
+              icon={<Shield className="h-4 w-4 text-green-400" />}
+              title="Chain of Custody"
+              subtitle={`${dashboardData?.chain_of_custody_count || 0} export records`}
+              time="Logged"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
@@ -267,6 +348,37 @@ function Dashboard({ setCurrentPage }) {
           onClick={() => setCurrentPage('analysis')}
         />
       </div>
+    </div>
+  );
+}
+
+function AlertBar({ label, value, color }) {
+  const maxValue = 20; // Scale for display
+  const width = Math.min((value / maxValue) * 100, 100);
+  return (
+    <div>
+      <div className="flex justify-between text-sm mb-1">
+        <span className="text-slate-400">{label}</span>
+        <span className="text-white font-medium">{value}</span>
+      </div>
+      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${width}%` }}></div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityItem({ icon, title, subtitle, time }) {
+  return (
+    <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition">
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-slate-700 rounded-lg">{icon}</div>
+        <div>
+          <p className="text-sm font-medium text-white">{title}</p>
+          <p className="text-xs text-slate-400">{subtitle}</p>
+        </div>
+      </div>
+      <span className="text-xs text-slate-500">{time}</span>
     </div>
   );
 }

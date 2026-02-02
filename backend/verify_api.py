@@ -3,7 +3,7 @@ import requests
 import json
 import os
 
-BASE_URL = "http://localhost:5003/api"
+BASE_URL = "http://localhost:5006/api"
 
 def test_live_scraping():
     print("\n[TEST] 1. Live Scraping Endpoint...")

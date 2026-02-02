@@ -1,0 +1,1828 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Activity, Upload, BarChart3, Shield, Menu, User,
+  ChevronRight, Laptop, Database, BrainCircuit, Bell
+} from 'lucide-react';
+import axios from 'axios';
+import Page1LiveScraping from './pages/Page1LiveScraping';
+import Page2DatasetManagement from './pages/Page2DatasetManagement';
+import Page3AIForensicEngine from './pages/Page3AIForensicEngine';
+
+const API_BASE = 'http://localhost:5006/api';
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState('home');
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    checkSystemHealth();
+  }, []);
+
+  const checkSystemHealth = async () => {
+    try {
+      const response = await axios.get(`${API_BASE.replace('/api', '')}/health`);
+      setSystemHealth(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('System unavailable:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-950">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-cyan-400 font-medium tracking-wide">INITIALIZING ORBITAL FORENSICS...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Define nav items
+  const navItems = [
+    { id: 'home', label: 'Overview', icon: <Activity className="h-5 w-5" /> },
+    { id: 'scrape', label: 'Live Sentinel', icon: <Laptop className="h-5 w-5" /> },
+    { id: 'dataset', label: 'Evidence Locker', icon: <Database className="h-5 w-5" /> },
+    { id: 'analysis', label: 'Neural Engine', icon: <BrainCircuit className="h-5 w-5" /> },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex overflow-hidden">
+
+      {/* 🚀 SIDEBAR NAVIGATION */}
+      <aside
+        className={`${isSidebarOpen ? 'w-72' : 'w-20'} bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 flex flex-col transition-all duration-300 z-50`}
+      >
+        {/* Brand Header */}
+        <div className="h-20 flex items-center px-6 border-b border-white/5">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
+            {isSidebarOpen && (
+              <div>
+                <h1 className="text-xl font-bold text-white tracking-tight">WinSentinel</h1>
+                <p className="text-xs text-cyan-400 font-medium tracking-wider">FORENSIC SUITE</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 py-8 px-4 space-y-2">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setCurrentPage(item.id)}
+              className={`w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 group relative
+                ${currentPage === item.id
+                  ? 'bg-gradient-to-r from-cyan-500/10 to-blue-500/10 text-cyan-400 shadow-inner'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              {currentPage === item.id && (
+                <div className="absolute left-0 w-1 h-8 bg-cyan-400 rounded-r-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"></div>
+              )}
+              {item.icon}
+              {isSidebarOpen && (
+                <span className="ml-3 font-medium tracking-wide">{item.label}</span>
+              )}
+              {!isSidebarOpen && (
+                <div className="absolute left-16 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none">
+                  {item.label}
+                </div>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* System Status Footer */}
+        <div className="p-4 border-t border-white/5">
+          {isSidebarOpen ? (
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-semibold text-slate-400">SYSTEM STATUS</span>
+                <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+              </div>
+              <div className="text-xs text-slate-500 flex justify-between">
+                <span>Backend API</span>
+                <span className="text-green-400">Online 8001</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <span className="flex h-3 w-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* 🖥️ MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col relative overflow-hidden">
+
+        {/* Background Ambient Glows */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px]"></div>
+        </div>
+
+        {/* Top Header */}
+        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-40">
+          <div className="flex items-center">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition mr-4"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-semibold text-white tracking-wide">
+              {navItems.find(n => n.id === currentPage)?.label}
+            </h2>
+          </div>
+
+          <div className="flex items-center space-x-6">
+            <button className="relative p-2 text-slate-400 hover:text-white transition">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-slate-900"></span>
+            </button>
+            <div className="flex items-center space-x-3 pl-6 border-l border-white/10">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium text-white">Administrator</p>
+                <p className="text-xs text-slate-400">Security Clearance: Lvl 5</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center">
+                <User className="h-5 w-5 text-slate-300" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto p-8 relative">
+          <div className="max-w-7xl mx-auto animate-fade-in-up">
+            {currentPage === 'home' && <Dashboard setCurrentPage={setCurrentPage} />}
+            {currentPage === 'scrape' && <div className="glass-card rounded-2xl p-1"><Page1LiveScraping /></div>}
+            {currentPage === 'dataset' && <div className="glass-card rounded-2xl p-1"><Page2DatasetManagement /></div>}
+            {currentPage === 'analysis' && <div className="glass-card rounded-2xl p-1"><Page3AIForensicEngine /></div>}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ setCurrentPage }) {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/dashboard/stats`);
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimestamp = (ts) => {
+    if (!ts) return 'Never';
+    const date = new Date(ts);
+    return date.toLocaleString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+      </div>
+    );
+  }
+
+  const stats = dashboardData?.stats || {};
+  const latestAnalysis = dashboardData?.latest_analysis || {};
+  const lastScrape = dashboardData?.last_scrape || {};
+
+  return (
+    <div className="space-y-8">
+      {/* Welcome Banner */}
+      <div className="relative rounded-3xl overflow-hidden glass-card p-8 md:p-12 mb-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Welcome back, <span className="gradient-text">Administrator</span>
+          </h1>
+          <p className="text-slate-400 text-lg max-w-2xl mb-8">
+            WinSentinel is ready. Your system security posture is currently stable.
+            Initiate a scan to detect new anomalies in real-time.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => setCurrentPage('scrape')}
+              className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-xl transition shadow-lg shadow-cyan-500/20 flex items-center"
+            >
+              <Activity className="h-5 w-5 mr-2" />
+              Start Live Scan
+            </button>
+            <button
+              onClick={() => setCurrentPage('analysis')}
+              className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-white/10 transition flex items-center"
+            >
+              <BrainCircuit className="h-5 w-5 mr-2" />
+              View Intelligence
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
+      <h3 className="text-lg font-semibold text-slate-300 mb-4 px-1">System Telemetry</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard
+          icon={<Shield className="text-emerald-400" />}
+          label="Security Status"
+          value={latestAnalysis.risk_score > 50 ? "AT RISK" : "SECURE"}
+          sub={latestAnalysis.risk_score > 0 ? `Risk Score: ${latestAnalysis.risk_score}%` : "No active threats"}
+          trend={latestAnalysis.risk_score > 50 ? "High" : "+12%"}
+          trendUp={latestAnalysis.risk_score <= 50}
+        />
+        <MetricCard
+          icon={<Database className="text-blue-400" />}
+          label="Datasets Loaded"
+          value={dashboardData?.datasets_count || 0}
+          sub="Evidence files"
+          trend={`${dashboardData?.chain_of_custody_count || 0} exports`}
+          trendUp={true}
+        />
+        <MetricCard
+          icon={<BrainCircuit className="text-purple-400" />}
+          label="AI Confidence"
+          value={latestAnalysis.status === "analysis_complete" ? "98.2%" : "Pending"}
+          sub="Model accuracy"
+          trend={latestAnalysis.timestamp ? "Analyzed" : "Waiting"}
+        />
+        <MetricCard
+          icon={<Activity className="text-orange-400" />}
+          label="Total Alerts"
+          value={stats.total_alerts || 0}
+          sub={`${stats.critical_threats || 0} critical`}
+        />
+      </div>
+
+      {/* Alert Breakdown + Recent Activity Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Alert Breakdown */}
+        <div className="glass-panel p-6 rounded-2xl">
+          <h3 className="text-lg font-semibold text-white mb-4">Alert Breakdown</h3>
+          <div className="space-y-4">
+            <AlertBar label="Brute Force" value={stats.alert_breakdown?.brute_force || 0} color="bg-red-500" />
+            <AlertBar label="Malware" value={stats.alert_breakdown?.malware || 0} color="bg-orange-500" />
+            <AlertBar label="Reconnaissance" value={stats.alert_breakdown?.reconnaissance || 0} color="bg-yellow-500" />
+            <AlertBar label="Persistence" value={stats.alert_breakdown?.persistence || 0} color="bg-purple-500" />
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="glass-panel p-6 rounded-2xl">
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            <ActivityItem
+              icon={<Laptop className="h-4 w-4 text-cyan-400" />}
+              title="Last Scrape"
+              subtitle={lastScrape.case_id ? `Case: ${lastScrape.case_id}` : "No scrapes yet"}
+              time={formatTimestamp(lastScrape.timestamp)}
+            />
+            <ActivityItem
+              icon={<BrainCircuit className="h-4 w-4 text-purple-400" />}
+              title="Last Analysis"
+              subtitle={latestAnalysis.status || "No analysis yet"}
+              time={formatTimestamp(latestAnalysis.timestamp)}
+            />
+            <ActivityItem
+              icon={<Database className="h-4 w-4 text-blue-400" />}
+              title="Datasets"
+              subtitle={`${dashboardData?.datasets_count || 0} files loaded`}
+              time="Ready"
+            />
+            <ActivityItem
+              icon={<Shield className="h-4 w-4 text-green-400" />}
+              title="Chain of Custody"
+              subtitle={`${dashboardData?.chain_of_custody_count || 0} export records`}
+              time="Logged"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <h3 className="text-lg font-semibold text-slate-300 mb-4 px-1 mt-8">Module Shortcuts</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ActionCard
+          title="Live Sentinel"
+          desc="Real-time process, registry, and network monitoring with anomaly detection."
+          icon={<Laptop className="h-6 w-6 text-cyan-400" />}
+          delay="0"
+          onClick={() => setCurrentPage('scrape')}
+        />
+        <ActionCard
+          title="Evidence Locker"
+          desc="Upload forensic datasets (.evtx, .csv) for offline processing."
+          icon={<Database className="h-6 w-6 text-blue-400" />}
+          delay="100"
+          onClick={() => setCurrentPage('dataset')}
+        />
+        <ActionCard
+          title="Neural Engine"
+          desc="LLM-powered threat analysis and automated reporting."
+          icon={<BrainCircuit className="h-6 w-6 text-purple-400" />}
+          delay="200"
+          onClick={() => setCurrentPage('analysis')}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AlertBar({ label, value, color }) {
+  const maxValue = 20; // Scale for display
+  const width = Math.min((value / maxValue) * 100, 100);
+  return (
+    <div>
+      <div className="flex justify-between text-sm mb-1">
+        <span className="text-slate-400">{label}</span>
+        <span className="text-white font-medium">{value}</span>
+      </div>
+      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${width}%` }}></div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityItem({ icon, title, subtitle, time }) {
+  return (
+    <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition">
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-slate-700 rounded-lg">{icon}</div>
+        <div>
+          <p className="text-sm font-medium text-white">{title}</p>
+          <p className="text-xs text-slate-400">{subtitle}</p>
+        </div>
+      </div>
+      <span className="text-xs text-slate-500">{time}</span>
+    </div>
+  );
+}
+
+function MetricCard({ icon, label, value, sub, trend, trendUp }) {
+  return (
+    <div className="glass-panel p-6 rounded-2xl hover:bg-slate-800/50 transition">
+      <div className="flex justify-between items-start mb-4">
+        <div className="p-3 bg-slate-800 rounded-lg border border-white/5">
+          {React.cloneElement(icon, { className: `h-6 w-6 ${icon.props.className}` })}
+        </div>
+        {trend && (
+          <span className={`text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
+            {trend}
+          </span>
+        )}
+      </div>
+      <div>
+        <h4 className="text-2xl font-bold text-white mb-1">{value}</h4>
+        <p className="text-sm text-slate-400">{label}</p>
+        <p className="text-xs text-slate-600 mt-1">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+function ActionCard({ title, desc, icon, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-left group glass-panel p-6 rounded-2xl hover:border-cyan-500/30 hover:bg-slate-800/80 transition-all duration-300 relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <ChevronRight className="h-5 w-5 text-gray-400" />
+      </div>
+      <div className="mb-4 p-3 bg-slate-900 rounded-xl w-fit group-hover:scale-110 transition-transform duration-300">
+        {icon}
+      </div>
+      <h4 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">{title}</h4>
+      <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+    </button>
+  );
+}
+import React, { useState, useEffect } from 'react';
+import { Play, AlertTriangle, Lock, CheckCircle, BarChart3, PieChart, TrendingUp, Shield, Activity } from 'lucide-react';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:5006/api';
+
+export default function Page1LiveScraping() {
+  const [scrapeConfig, setScrapeConfig] = useState({
+    scope: 'full_system',
+    include_processes: true,
+    include_registry: true,
+    include_network: true,
+    include_event_logs: true
+  });
+
+  const [scrapingInProgress, setScrapingInProgress] = useState(false);
+  const [scrapedData, setScrapedData] = useState(null);
+  const [systemTelemetry, setSystemTelemetry] = useState(null);
+  const [integrityChecks, setIntegrityChecks] = useState([]);
+  const [backendStatus, setBackendStatus] = useState(null);
+  const [privilegeStatus, setPrivilegeStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    checkBackendStatus();
+    checkPrivilegeStatus();
+  }, []);
+
+  const checkBackendStatus = async () => {
+    try {
+      const response = await axios.get(`${API_BASE.replace('/api', '')}/health`);
+      setBackendStatus(response.data);
+    } catch (error) {
+      console.error('Backend status check failed:', error);
+    }
+  };
+
+  const checkPrivilegeStatus = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/scrape/privilege-status`);
+      if (!response.data.has_admin) {
+        setPrivilegeStatus(response.data);
+      }
+    } catch (error) {
+      console.error('Privilege check failed:', error);
+      // If API call fails, assume admin is available (backend is running)
+    }
+  };
+
+  const handleRestartAdmin = async () => {
+    if (confirm("This will restart the backend server and request Admin privileges via UAC. Continue?")) {
+      // Fire and forget - the server will die before responding sometimes
+      axios.post(`${API_BASE}/system/restart-admin`).catch(e => console.log('Server restarting...'));
+
+      setErrorMessage({
+        title: "Restarting...",
+        message: "Server is rebooting with Admin privileges. Please wait 10-15 seconds...",
+        instructions: "If the page doesn't recover, please run 'launcher.bat' manually."
+      });
+
+      // Poll for health
+      let checks = 0;
+      const interval = setInterval(async () => {
+        try {
+          await axios.get(`${API_BASE.replace('/api', '')}/health`);
+          clearInterval(interval);
+          window.location.reload();
+        } catch (e) {
+          checks++;
+          if (checks > 20) clearInterval(interval);
+        }
+      }, 1000);
+    }
+  };
+
+  const handleStartScrape = async () => {
+    setErrorMessage(null);
+    setScrapingInProgress(true);
+    try {
+      const response = await axios.post(`${API_BASE}/scrape/start`, scrapeConfig);
+      setScrapedData(response.data);
+
+      // Calculate integrity hash
+      const hashResponse = await axios.post(`${API_BASE}/scrape/integrity-check`, response.data);
+      setIntegrityChecks(prev => [...prev, hashResponse.data]);
+
+      // Fetch telemetry
+      const telemetryResponse = await axios.get(`${API_BASE}/scrape/system-telemetry`);
+      setSystemTelemetry(telemetryResponse.data);
+    } catch (error) {
+      console.error('Scrape failed:', error);
+      const errorData = error.response?.data?.detail;
+      if (typeof errorData === 'object' && errorData.error) {
+        setErrorMessage({
+          title: errorData.error,
+          message: errorData.message,
+          instructions: errorData.instructions
+        });
+      } else {
+        setErrorMessage({
+          title: 'Scraping Failed',
+          message: error.response?.data?.detail || error.message || 'Unknown error occurred',
+          instructions: 'Check the backend console for more details.'
+        });
+      }
+    } finally {
+      setScrapingInProgress(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Admin Privilege Alert */}
+      {privilegeStatus && !privilegeStatus.has_admin && (
+        <div className="bg-red-900 border border-red-700 rounded-lg p-6">
+          <div className="flex items-start space-x-4">
+            <Shield className="h-6 w-6 text-red-400 flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-100 mb-2">Admin Privileges Required</h3>
+              <p className="text-red-200 mb-4">{privilegeStatus.message}</p>
+              <div className="bg-red-800 rounded p-4 text-sm text-red-50 font-mono whitespace-pre-wrap">
+                {privilegeStatus.instructions}
+              </div>
+              <button
+                onClick={() => setPrivilegeStatus(null)}
+                className="mt-4 px-4 py-2 bg-red-700 hover:bg-red-600 rounded font-medium text-sm"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={handleRestartAdmin}
+                className="mt-4 ml-3 px-4 py-2 bg-red-900 border border-red-500 hover:bg-red-800 rounded font-medium text-sm flex-inline items-center"
+              >
+                <Shield className="w-4 h-4 inline mr-2" />
+                Restart as Administrator
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message Alert */}
+      {
+        errorMessage && (
+          <div className="bg-red-900 border border-red-700 rounded-lg p-6">
+            <div className="flex items-start space-x-4">
+              <AlertTriangle className="h-6 w-6 text-red-400 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-100 mb-2">{errorMessage.title}</h3>
+                <p className="text-red-200 mb-3">{errorMessage.message}</p>
+                {errorMessage.instructions && (
+                  <div className="bg-red-800 rounded p-3 text-sm text-red-50 font-mono whitespace-pre-wrap mb-3">
+                    {errorMessage.instructions}
+                  </div>
+                )}
+                <button
+                  onClick={() => setErrorMessage(null)}
+                  className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded font-medium text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Target Scope */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4">Target Scope Configuration</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Artifact Scope</label>
+            <select
+              value={scrapeConfig.scope}
+              onChange={(e) => setScrapeConfig({ ...scrapeConfig, scope: e.target.value })}
+              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+            >
+              <option value="full_system">Full System</option>
+              <option value="volatile_only">Volatile Only (RAM)</option>
+              <option value="custom">Custom Registry Keys</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Collectors */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4">Active Collectors</h2>
+        <div className="space-y-3">
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={scrapeConfig.include_processes}
+              onChange={(e) => setScrapeConfig({ ...scrapeConfig, include_processes: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <span>Process Monitor (Parent/Child Trees)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={scrapeConfig.include_registry}
+              onChange={(e) => setScrapeConfig({ ...scrapeConfig, include_registry: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <span>Registry Watcher (Persistence Keys)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={scrapeConfig.include_network}
+              onChange={(e) => setScrapeConfig({ ...scrapeConfig, include_network: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <span>Network Sniffer (Active Connections)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={scrapeConfig.include_event_logs}
+              onChange={(e) => setScrapeConfig({ ...scrapeConfig, include_event_logs: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <span>Event Log Collector (Security Logs)</span>
+          </label>
+        </div>
+      </div>
+
+      {/* System Telemetry */}
+      {
+        systemTelemetry && (
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 className="text-xl font-semibold mb-4">System Telemetry</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-400 text-sm">CPU Usage</p>
+                <p className="text-2xl font-bold text-cyan-400">{systemTelemetry.cpu_percent.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Memory Usage</p>
+                <p className="text-2xl font-bold text-cyan-400">{systemTelemetry.memory_percent.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Visualizations - Only show if data exists */}
+      {/* 🌳 REAL PROCESS TREE */}
+      {scrapedData && scrapedData.artifacts?.processes?.root_processes && (
+        <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
+          <h3 className="text-lg font-semibold mb-4 flex items-center text-cyan-400">
+            <Activity className="h-5 w-5 mr-2" />
+            Live Process Tree (Real-Time)
+          </h3>
+          <div className="font-mono text-xs space-y-1 text-slate-300 overflow-auto max-h-[500px] pr-2 custom-scrollbar">
+            {scrapedData.artifacts.processes.root_processes.length > 0 ? (
+              <RecursiveProcessTree nodes={scrapedData.artifacts.processes.root_processes} />
+            ) : (
+              <p className="text-slate-500 italic">No process data captured. Check permissions.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 📜 REAL EVENT LOGS */}
+      {scrapedData && scrapedData.artifacts?.event_logs?.critical_events && (
+        <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
+          <h3 className="text-lg font-semibold mb-4 flex items-center text-yellow-400">
+            <Shield className="h-5 w-5 mr-2" />
+            Security Event Timeline
+          </h3>
+          <div className="space-y-2 max-h-[400px] overflow-auto custom-scrollbar">
+            {scrapedData.artifacts.event_logs.critical_events.length > 0 ? (
+              scrapedData.artifacts.event_logs.critical_events.map((evt, idx) => (
+                <div key={idx} className="bg-slate-800/50 p-3 rounded border-l-2 border-yellow-500 hover:bg-slate-800 transition">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-slate-200">Event ID {evt.event_id}</span>
+                    <span className="text-xs text-slate-500">{evt.timestamp}</span>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1">{evt.message}</p>
+                  <p className="text-xs text-slate-600 mt-1">Source: {evt.source}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-500 italic">No critical security events found in the last 24h.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleStartScrape}
+        disabled={scrapingInProgress}
+        className={`w-full py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition ${scrapingInProgress
+          ? 'bg-gray-600 cursor-not-allowed'
+          : 'bg-cyan-600 hover:bg-cyan-700'
+          }`}
+      >
+        <Play className="h-5 w-5" />
+        <span>{scrapingInProgress ? 'Scraping in Progress...' : 'Start Live Scraping'}</span>
+      </button>
+
+      <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 flex items-start space-x-3">
+        <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold text-yellow-200">Information</p>
+          <p className="text-sm text-yellow-300 mt-1">
+            Running with admin privileges provides access to Event Logs, Registry, and Network APIs. You can use Live Scraping without admin to collect process information.
+          </p>
+        </div>
+      </div>
+    </div >
+  );
+}
+
+function RecursiveProcessTree({ nodes, level = 0 }) {
+  if (!nodes) return null;
+  return (
+    <div className="space-y-1">
+      {nodes.map((node) => (
+        <div key={node.pid}>
+          <div
+            className="flex items-center hover:bg-white/5 rounded px-1 py-0.5"
+            style={{ paddingLeft: `${level * 16}px` }}
+          >
+            <span className="text-slate-500 mr-2 opacity-50">└─</span>
+            <span className={`mr-2 ${node.forensic_flags?.includes('MALWARE_SIGNATURE') ? 'text-red-400 font-bold' : 'text-cyan-300'}`}>
+              {node.name}
+            </span>
+            <span className="text-slate-600 text-[10px] mr-2">({node.pid})</span>
+            {node.forensic_flags && node.forensic_flags.length > 0 && (
+              <span className="text-[10px] bg-red-900/50 text-red-200 px-1 rounded border border-red-800">
+                {node.forensic_flags[0]}
+              </span>
+            )}
+          </div>
+          {node.children && <RecursiveProcessTree nodes={node.children} level={level + 1} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+import React, { useState } from 'react';
+import { Upload, FileText, Trash2, Download, BarChart3, Zap } from 'lucide-react';
+import axios from 'axios';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+const API_BASE = 'http://localhost:5006/api';
+
+export default function Page2DatasetManagement() {
+  const [datasets, setDatasets] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [csvColumns, setCsvColumns] = useState([]);
+  const [csvData, setCsvData] = useState([]); // Full data
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [chartData, setChartData] = useState(null);
+  const [selectedChartCol, setSelectedChartCol] = useState(0);
+  const [analyzeInProgress, setAnalyzeInProgress] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [normalizeConfig, setNormalizeConfig] = useState({
+    dataset_name: '',
+    dataset_type: 'csv',
+    timestamp_column: '',
+    source_ip_column: ''
+  });
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('dataset_name', file.name);
+
+    try {
+      const response = await axios.post(`${API_BASE}/dataset/upload`, formData, {
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percent);
+        }
+      });
+
+      // Store uploaded file info
+      setUploadedFile({
+        name: response.data.filename,
+        size: response.data.size_bytes,
+        hash: response.data.hash,
+        timestamp: response.data.timestamp
+      });
+
+      // Parse CSV to get columns
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        if (lines.length > 0) {
+          const headers = lines[0].split(',').map(h => h.trim());
+          setCsvColumns(headers);
+
+          // Store up to 1000 rows for view/analysis
+          const parsedRows = lines.slice(1, 1001).map(line => line.split(',').map(v => v.trim()));
+          setCsvData(parsedRows);
+
+          // Default chart: Last column usually contains labels/results
+          if (headers.length > 0) {
+            generateChartData(parsedRows, headers.length - 1, headers);
+            setSelectedChartCol(headers.length - 1);
+          }
+        }
+      };
+      fileReader.readAsText(file);
+
+      setDatasets(prev => [...prev, response.data]);
+      setUploadProgress(0);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('File upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleNormalize = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/dataset/normalize`, normalizeConfig);
+      alert(`Dataset normalized! Rows: ${response.data.row_count}`);
+    } catch (error) {
+      console.error('Normalization failed:', error);
+      alert('Normalization failed');
+    }
+  };
+
+  const handleDeduplicate = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/dataset/deduplicate`, {
+        dataset_name: normalizeConfig.dataset_name
+      });
+      alert(`Deduplication complete: ${response.data.duplicates_removed} duplicates removed`);
+    } catch (error) {
+      console.error('Deduplication failed:', error);
+    }
+  };
+
+  const handleAIAnalysis = async () => {
+    if (!uploadedFile) {
+      alert('Please upload a CSV file first');
+      return;
+    }
+
+    setAnalyzeInProgress(true);
+    try {
+      const response = await axios.post(`${API_BASE}/analysis/run`, {
+        dataset_name: uploadedFile.name,
+        algorithm: 'isolation_forest'
+      });
+
+      setAnalysisResults(response.data);
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      alert('AI Analysis failed');
+    } finally {
+      setAnalyzeInProgress(false);
+    }
+  };
+
+  const generateChartData = (data, colIndex, headers = csvColumns) => {
+    if (!data || data.length === 0) return;
+
+    const counts = {};
+    data.forEach(row => {
+      const val = row[colIndex] || 'Unknown';
+      counts[val] = (counts[val] || 0) + 1;
+    });
+
+    // Sort by count and take top 10
+    const sortedCounts = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    setChartData({
+      labels: sortedCounts.map(([k]) => k),
+      datasets: [
+        {
+          data: sortedCounts.map(([, v]) => v),
+          backgroundColor: [
+            '#06b6d4', '#8b5cf6', '#eab308', '#ef4444',
+            '#22c55e', '#f97316', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'
+          ],
+          borderColor: '#1f2937',
+          borderWidth: 1,
+        },
+      ],
+    });
+  };
+
+  const handleSort = (colIndex) => {
+    let direction = 'ascending';
+    if (sortConfig.key === colIndex && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key: colIndex, direction });
+
+    const sorted = [...csvData].sort((a, b) => {
+      if (a[colIndex] < b[colIndex]) return direction === 'ascending' ? -1 : 1;
+      if (a[colIndex] > b[colIndex]) return direction === 'ascending' ? 1 : -1;
+      return 0;
+    });
+    setCsvData(sorted);
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Upload Portal */}
+      <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Upload className="h-5 w-5 mr-2" />
+          Upload Dataset
+        </h2>
+
+        <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-cyan-500 transition cursor-pointer">
+          <input
+            type="file"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            className="hidden"
+            id="file-upload"
+            accept=".csv,.json,.evtx,.xlsx"
+          />
+          <label htmlFor="file-upload" className="cursor-pointer">
+            <Upload className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+            <p className="text-gray-300">Drag and drop your dataset here</p>
+            <p className="text-gray-500 text-sm">or click to browse</p>
+            <p className="text-gray-600 text-xs mt-2">Supported: CSV, JSON, EVTX, XLSX</p>
+          </label>
+        </div>
+
+        {uploadProgress > 0 && (
+          <div className="mt-4">
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-cyan-500 h-2 rounded-full transition"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">{uploadProgress}%</p>
+          </div>
+        )}
+      </div>
+
+      {/* CSV Column Preview - After Upload */}
+      {uploadedFile && csvColumns.length > 0 && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <FileText className="h-5 w-5 mr-2 text-cyan-400" />
+            Uploaded File: {uploadedFile.name}
+          </h2>
+
+          {/* File Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-xs text-gray-400">File Size</p>
+              <p className="text-lg font-semibold text-cyan-400">{(uploadedFile.size / 1024).toFixed(2)} KB</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-xs text-gray-400">Uploaded</p>
+              <p className="text-lg font-semibold text-green-400">{uploadedFile.timestamp}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-xs text-gray-400">Columns Detected</p>
+              <p className="text-lg font-semibold text-yellow-400">{csvColumns.length}</p>
+            </div>
+          </div>
+
+          {/* Column List */}
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-300 mb-3">CSV Parameters (Columns):</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {csvColumns.map((col, idx) => (
+                <div key={idx} className="bg-gray-700 p-3 rounded text-sm">
+                  <span className="text-cyan-400">#{idx + 1}</span>
+                  <p className="text-gray-200 font-mono text-xs mt-1">{col}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Data Visualization & Preview */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Pie Chart Section */}
+            <div className="lg:col-span-1 bg-gray-900 p-4 rounded-lg flex flex-col items-center justify-center">
+              <h3 className="text-gray-300 font-semibold mb-3 w-full text-center">Data Distribution</h3>
+
+              <div className="w-full mb-4">
+                <label className="text-xs text-gray-400 mb-1 block">Visualizing Column:</label>
+                <select
+                  value={selectedChartCol}
+                  onChange={(e) => {
+                    const idx = parseInt(e.target.value);
+                    setSelectedChartCol(idx);
+                    generateChartData(csvData, idx);
+                  }}
+                  className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-sm"
+                >
+                  {csvColumns.map((col, idx) => (
+                    <option key={idx} value={idx}>{col}</option>
+                  ))}
+                </select>
+              </div>
+
+              {chartData && (
+                <div className="w-48 h-48">
+                  <Pie data={chartData} options={{ maintainAspectRatio: false }} />
+                </div>
+              )}
+            </div>
+
+            {/* Detailed Table Section */}
+            <div className="lg:col-span-2">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-gray-300">Detailed Data View ({csvData.length} rows)</h3>
+                <span className="text-xs text-gray-500 italic">Click headers to sort</span>
+              </div>
+
+              <div className="overflow-x-auto overflow-y-auto max-h-80 bg-gray-900 rounded p-4 border border-gray-700">
+                <table className="w-full text-xs text-gray-300">
+                  <thead className="sticky top-0 bg-gray-800 z-10 shadow-lg">
+                    <tr>
+                      {csvColumns.map((col, idx) => (
+                        <th
+                          key={idx}
+                          onClick={() => handleSort(idx)}
+                          className={`px-3 py-3 text-left font-semibold cursor-pointer hover:text-white transition ${sortConfig.key === idx ? 'text-cyan-400' : 'text-gray-400'
+                            }`}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>{col}</span>
+                            {sortConfig.key === idx && (
+                              <span>{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvData.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="border-b border-gray-800 hover:bg-gray-700/50 transition">
+                        {row.map((cell, cellIdx) => (
+                          <td key={cellIdx} className="px-3 py-2 truncate max-w-[150px] font-mono text-gray-400">
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Analysis Button */}
+          <button
+            onClick={handleAIAnalysis}
+            disabled={analyzeInProgress}
+            className={`w-full py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition ${analyzeInProgress
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-purple-600 hover:bg-purple-700'
+              }`}
+          >
+            <Zap className="h-5 w-5" />
+            <span>{analyzeInProgress ? 'Running AI Analysis...' : 'Run AI Analysis'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* AI Analysis Results */}
+      {analysisResults && (
+        <div className="space-y-6">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-red-900 to-red-700 rounded-lg p-6">
+              <p className="text-red-200 text-sm">Threats Identified</p>
+              <p className="text-4xl font-bold text-red-100 mt-2">
+                {analysisResults.threat_indicators?.total_threats_identified || 0}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-orange-900 to-orange-700 rounded-lg p-6">
+              <p className="text-orange-200 text-sm">Risk Score</p>
+              <p className="text-4xl font-bold text-orange-100 mt-2">{analysisResults.risk_score || 0}</p>
+            </div>
+            <div className="bg-gradient-to-br from-yellow-900 to-yellow-700 rounded-lg p-6">
+              <p className="text-yellow-200 text-sm">Total Records</p>
+              <p className="text-4xl font-bold text-yellow-100 mt-2">
+                {analysisResults.metadata?.total_records || 0}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-green-900 to-green-700 rounded-lg p-6">
+              <p className="text-green-200 text-sm">Date Range</p>
+              <p className="text-lg font-bold text-green-100 mt-2">
+                {analysisResults.metadata?.date_range_days || '?'} days
+              </p>
+            </div>
+          </div>
+
+          {/* Severity Distribution */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2 text-purple-400" />
+              Event Severity Distribution
+            </h3>
+            <div className="space-y-3">
+              {analysisResults.severity_distribution ? (
+                Object.entries(analysisResults.severity_distribution).filter(([k]) => k !== 'error_percentage').map(([level, count]) => {
+                  const colors = {
+                    'Critical': 'bg-red-600',
+                    'Error': 'bg-orange-600',
+                    'Warning': 'bg-yellow-600',
+                    'Information': 'bg-blue-600'
+                  };
+                  const total = analysisResults.metadata?.total_records || 1;
+                  return (
+                    <div key={level}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-semibold">{level}</span>
+                        <span className="text-sm">{count} ({((count / total) * 100).toFixed(1)}%)</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded h-3">
+                        <div
+                          className={`${colors[level] || 'bg-gray-500'} h-3 rounded`}
+                          style={{ width: `${(count / total) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : null}
+            </div>
+          </div>
+
+          {/* Threat Indicators */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4">Detected Threats (MITRE ATT&CK)</h3>
+            <div className="space-y-3">
+              {analysisResults.threat_indicators?.threats && analysisResults.threat_indicators.threats.length > 0 ? (
+                analysisResults.threat_indicators.threats.map((threat, idx) => (
+                  <div key={idx} className="bg-gray-700 p-4 rounded-lg border-l-4 border-red-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-semibold text-gray-100">{threat.threat_type}</p>
+                      <span className="text-xs bg-red-600 px-3 py-1 rounded font-mono">{threat.mitre_technique}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 mb-2">{threat.description}</p>
+                    <p className="text-xs text-gray-400">Events: {threat.event_count}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm">No major threats detected</p>
+              )}
+            </div>
+          </div>
+
+          {/* Anomalies Detected */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4">Detected Anomalies</h3>
+            <div className="space-y-3">
+              {analysisResults.sample_anomalies && analysisResults.sample_anomalies.length > 0 ? (
+                analysisResults.sample_anomalies.map((anomaly, idx) => (
+                  <div key={idx} className="bg-gray-700 p-3 rounded text-sm">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-yellow-300">{anomaly.anomaly_type}</p>
+                        <p className="text-gray-300 text-xs mt-1">{anomaly.details}</p>
+                      </div>
+                      <span className="bg-yellow-600 text-white px-2 py-1 rounded text-xs ml-2">
+                        {anomaly.count} events
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm">No major anomalies detected</p>
+              )}
+            </div>
+          </div>
+
+          {/* Risk Assessment & Recommendations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-semibold mb-4">Risk Assessment</h3>
+              <div className={`p-4 rounded-lg ${analysisResults.overall_risk === 'HIGH' ? 'bg-red-900' :
+                analysisResults.overall_risk === 'MEDIUM' ? 'bg-yellow-900' :
+                  'bg-green-900'
+                }`}>
+                <p className="text-sm text-gray-300 mb-2">Overall Risk Level</p>
+                <p className={`text-4xl font-bold ${analysisResults.overall_risk === 'HIGH' ? 'text-red-400' :
+                  analysisResults.overall_risk === 'MEDIUM' ? 'text-yellow-400' :
+                    'text-green-400'
+                  }`}>
+                  {analysisResults.overall_risk || 'UNKNOWN'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-semibold mb-4">Recommendations</h3>
+              <div className="space-y-2">
+                {analysisResults.recommendations && analysisResults.recommendations.length > 0 ? (
+                  analysisResults.recommendations.slice(0, 3).map((rec, idx) => (
+                    <div key={idx} className="text-sm p-2 bg-gray-700 rounded">
+                      <div className="flex items-start">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold mr-2 ${rec.priority === 'HIGH' ? 'bg-red-600' :
+                          rec.priority === 'MEDIUM' ? 'bg-yellow-600' :
+                            'bg-blue-600'
+                          }`}>{rec.priority}</span>
+                        <span className="text-gray-300">{rec.action}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-sm">No critical recommendations</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Metadata Summary */}
+          {analysisResults.metadata && (
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-semibold mb-4">Event Log Metadata</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-400">Unique Sources</p>
+                  <p className="text-xl font-semibold text-cyan-400 mt-1">
+                    {analysisResults.metadata.unique_sources || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Unique Users</p>
+                  <p className="text-xl font-semibold text-cyan-400 mt-1">
+                    {analysisResults.metadata.unique_users || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Unique Computers</p>
+                  <p className="text-xl font-semibold text-cyan-400 mt-1">
+                    {analysisResults.metadata.unique_computers || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Analysis Type</p>
+                  <p className="text-xl font-semibold text-purple-400 mt-1">
+                    Windows Forensics
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4">Dataset Normalizer</h2>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Dataset Name</label>
+              <input
+                type="text"
+                value={normalizeConfig.dataset_name}
+                onChange={(e) => setNormalizeConfig({ ...normalizeConfig, dataset_name: e.target.value })}
+                placeholder="e.g., UNSW-NB15.csv"
+                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Dataset Type</label>
+              <select
+                value={normalizeConfig.dataset_type}
+                onChange={(e) => setNormalizeConfig({ ...normalizeConfig, dataset_type: e.target.value })}
+                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+              >
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+                <option value="evtx">EVTX</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Timestamp Column</label>
+              <input
+                type="text"
+                value={normalizeConfig.timestamp_column}
+                onChange={(e) => setNormalizeConfig({ ...normalizeConfig, timestamp_column: e.target.value })}
+                placeholder="e.g., StartTime"
+                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Source IP Column</label>
+              <input
+                type="text"
+                value={normalizeConfig.source_ip_column}
+                onChange={(e) => setNormalizeConfig({ ...normalizeConfig, source_ip_column: e.target.value })}
+                placeholder="e.g., src"
+                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              onClick={handleNormalize}
+              className="flex-1 bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded font-semibold transition"
+            >
+              Normalize Dataset
+            </button>
+            <button
+              onClick={handleDeduplicate}
+              className="flex-1 bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded font-semibold transition"
+            >
+              Deduplicate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Dataset Archive */}
+      {datasets.length > 0 && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <FileText className="h-5 w-5 mr-2" />
+            Dataset Archive
+          </h2>
+          <div className="space-y-2">
+            {datasets.map((ds, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-gray-700 p-3 rounded">
+                <div className="flex-1">
+                  <p className="font-medium">{ds.name}</p>
+                  <p className="text-xs text-gray-400">{(ds.size / 1024).toFixed(2)} KB | {ds.timestamp}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-1">SHA-256: {ds.hash.substring(0, 16)}...</p>
+                </div>
+                <button className="p-2 hover:bg-gray-600 rounded">
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preprocessing Options */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4">Preprocessing Options</h2>
+        <div className="space-y-3">
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" defaultChecked className="w-4 h-4" />
+            <span>Noise Reduction (Filter benign system chatter)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" defaultChecked className="w-4 h-4" />
+            <span>Remove Duplicates (Exact matches)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" className="w-4 h-4" />
+            <span>Normalize Timestamps (UTC)</span>
+          </label>
+          <label className="flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" className="w-4 h-4" />
+            <span>Encode Malicious Strings (Regex matching)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+import React, { useState, useEffect } from 'react';
+import { BarChart3, Download, AlertTriangle, TrendingUp, Gauge } from 'lucide-react';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:5006/api';
+
+export default function Page3AIForensicEngine() {
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [timeline, setTimeline] = useState(null);
+  const [riskGauge, setRiskGauge] = useState(null);
+  const [parameterBreakdown, setParameterBreakdown] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [datasetName, setDatasetName] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [xaiExplanation, setXaiExplanation] = useState(null);
+
+  const handleRunAnalysis = async () => {
+    if (!datasetName) {
+      alert('Please enter a dataset name');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      // Run main analysis
+      const analysisResponse = await axios.post(`${API_BASE}/analysis/run`, null, {
+        params: { dataset_name: datasetName }
+      });
+      setAnalysisResults(analysisResponse.data);
+
+      // Get timeline
+      const timelineResponse = await axios.get(`${API_BASE}/analysis/timeline`, {
+        params: { dataset_name: datasetName }
+      });
+      setTimeline(timelineResponse.data.timeline);
+
+      // Get risk gauge
+      const riskResponse = await axios.get(`${API_BASE}/analysis/risk-gauge`, {
+        params: { dataset_name: datasetName }
+      });
+      setRiskGauge(riskResponse.data);
+
+      // Get parameter breakdown
+      const paramResponse = await axios.get(`${API_BASE}/analysis/parameter-breakdown`, {
+        params: { dataset_name: datasetName }
+      });
+      setParameterBreakdown(paramResponse.data);
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      alert('Analysis failed. Check that the dataset exists.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleEventClick = async (eventId) => {
+    try {
+      const response = await axios.get(`${API_BASE}/analysis/xai-explanation`, {
+        params: { event_id: eventId }
+      });
+      setSelectedEvent(eventId);
+      setXaiExplanation(response.data);
+    } catch (error) {
+      console.error('Failed to get explanation:', error);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/export/forensic-report`, {
+        case_id: `CASE_${Date.now()}`,
+        investigator_name: 'Investigator',
+        export_format: 'csv',
+        export_type: 'timeline'
+      });
+      alert(`Export ready: ${response.data.file_path}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed');
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Analysis Control */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <BarChart3 className="h-5 w-5 mr-2" />
+          Run Forensic Analysis
+        </h2>
+        <div className="flex space-x-3">
+          <input
+            type="text"
+            value={datasetName}
+            onChange={(e) => setDatasetName(e.target.value)}
+            placeholder="Enter dataset name (e.g., UNSW-NB15.csv)"
+            className="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+          />
+          <button
+            onClick={handleRunAnalysis}
+            disabled={analyzing}
+            className={`px-6 py-2 rounded font-semibold transition ${analyzing
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-cyan-600 hover:bg-cyan-700'
+              }`}
+          >
+            {analyzing ? 'Analyzing...' : 'Run Analysis'}
+          </button>
+        </div>
+      </div>
+
+      {/* Risk Gauge */}
+      {riskGauge && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Gauge className="h-5 w-5 mr-2" />
+            System Infection Probability
+          </h2>
+          <div className="flex items-center space-x-8">
+            <div className="relative w-48 h-48">
+              <svg className="transform -rotate-90" width="200" height="200">
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="90"
+                  fill="none"
+                  stroke="#374151"
+                  strokeWidth="20"
+                />
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="90"
+                  fill="none"
+                  stroke={riskGauge.risk_score > 70 ? '#ef4444' : '#eab308'}
+                  strokeWidth="20"
+                  strokeDasharray={`${(riskGauge.risk_score / 100) * 565} 565`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-4xl font-bold text-cyan-400">{riskGauge.risk_score.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-400">{riskGauge.severity.toUpperCase()}</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-300 mb-4">This system shows signs of:</p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span>Unauthorized registry modifications</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  <span>Suspicious process spawning</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  <span>Anomalous network connections</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Golden Thread Timeline */}
+      {timeline && timeline.length > 0 && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2" />
+            Infection Timeline (Golden Thread)
+          </h2>
+          <div className="space-y-3 max-h-96 overflow-auto">
+            {timeline.slice(0, 10).map((event, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleEventClick(idx)}
+                className={`p-3 rounded cursor-pointer border-l-4 transition ${event.severity === 'red'
+                  ? 'border-red-500 bg-red-900/20'
+                  : event.severity === 'yellow'
+                    ? 'border-yellow-500 bg-yellow-900/20'
+                    : 'border-green-500 bg-green-900/20'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{event.event_type}</p>
+                    <p className="text-sm text-gray-400">{event.timestamp}</p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded font-semibold ${event.severity === 'red' ? 'bg-red-600' :
+                    event.severity === 'yellow' ? 'bg-yellow-600' :
+                      'bg-green-600'
+                    }`}>
+                    {event.severity.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-300 mt-2">{event.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* XAI Explanation */}
+      {xaiExplanation && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-cyan-700 border-2">
+          <h2 className="text-xl font-semibold mb-4">AI Explainability (XAI)</h2>
+          <div className="space-y-3">
+            <div className="bg-gray-900 p-4 rounded">
+              <p className="text-gray-300 leading-relaxed">{xaiExplanation.explanation}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-2">MITRE ATT&CK Techniques:</p>
+              <div className="flex flex-wrap gap-2">
+                {xaiExplanation.mitre_attack?.map((technique, idx) => (
+                  <span key={idx} className="bg-cyan-900 px-3 py-1 rounded text-xs font-mono">
+                    {technique}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">Confidence Score: <span className="text-cyan-400 font-bold">{(xaiExplanation.confidence * 100).toFixed(1)}%</span></p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Parameter Breakdown */}
+      {parameterBreakdown && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4">Parameter Breakdown</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(parameterBreakdown).map(([param, data]) => (
+              <div key={param} className={`p-4 rounded border-l-4 ${data.risk === 'critical' ? 'border-red-500 bg-red-900/20' :
+                data.risk === 'high' ? 'border-orange-500 bg-orange-900/20' :
+                  data.risk === 'medium' ? 'border-yellow-500 bg-yellow-900/20' :
+                    'border-green-500 bg-green-900/20'
+                }`}>
+                <p className="font-semibold capitalize">{param.replace(/_/g, ' ')}</p>
+                <p className="text-2xl font-bold mt-2">{data.alerts}</p>
+                <p className="text-xs text-gray-400 mt-1">Risk: {data.risk.toUpperCase()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Summary */}
+      {analysisResults && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4">Analysis Summary</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-gray-400 text-sm">Anomalies Detected</p>
+              <p className="text-2xl font-bold text-cyan-400">{analysisResults.anomalies_detected || 0}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-gray-400 text-sm">Overall Risk</p>
+              <p className="text-2xl font-bold text-orange-400">{analysisResults.overall_risk || 'N/A'}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-gray-400 text-sm">Risk Score</p>
+              <p className="text-2xl font-bold text-red-400">{analysisResults.risk_score?.toFixed(1) || 0}</p>
+            </div>
+            <div className="bg-gray-700 p-4 rounded">
+              <p className="text-gray-400 text-sm">Dataset Type</p>
+              <p className="text-sm font-mono text-gray-300 mt-2">{analysisResults.dataset_type || 'Generic'}</p>
+            </div>
+          </div>
+
+          {/* Recommendations */}
+          {analysisResults.recommendations && analysisResults.recommendations.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold mb-2 text-yellow-400">Recommendations</h3>
+              <ul className="list-disc list-inside space-y-1 text-gray-300">
+                {analysisResults.recommendations.map((rec, idx) => (
+                  <li key={idx} className="text-sm">{rec}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* AI Insights Panel (Gemini) */}
+      {analysisResults?.ai_insights && Object.keys(analysisResults.ai_insights).length > 0 && (
+        <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-lg p-6 border border-purple-500/50">
+          <div className="flex items-center mb-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-3">
+              <span className="text-white font-bold text-sm">AI</span>
+            </div>
+            <h2 className="text-xl font-semibold text-purple-300">Gemini AI Threat Intelligence</h2>
+          </div>
+
+          {/* Executive Summary */}
+          {analysisResults.ai_insights.executive_summary && (
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Executive Summary</h3>
+              <p className="text-gray-200">{analysisResults.ai_insights.executive_summary}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Threat Level Badge */}
+            {analysisResults.ai_insights.threat_level && (
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2">Threat Level</h3>
+                <span className={`inline-block px-4 py-2 rounded-full font-bold text-lg ${analysisResults.ai_insights.threat_level === 'CRITICAL' ? 'bg-red-600 text-white' :
+                    analysisResults.ai_insights.threat_level === 'HIGH' ? 'bg-orange-600 text-white' :
+                      analysisResults.ai_insights.threat_level === 'MEDIUM' ? 'bg-yellow-600 text-black' :
+                        'bg-green-600 text-white'
+                  }`}>
+                  {analysisResults.ai_insights.threat_level}
+                </span>
+              </div>
+            )}
+
+            {/* AI Risk Score */}
+            {analysisResults.ai_insights.risk_score !== undefined && (
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2">AI Risk Assessment</h3>
+                <div className="flex items-center">
+                  <div className="flex-1 h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${analysisResults.ai_insights.risk_score > 70 ? 'bg-red-500' :
+                          analysisResults.ai_insights.risk_score > 40 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                      style={{ width: `${analysisResults.ai_insights.risk_score}%` }}
+                    ></div>
+                  </div>
+                  <span className="ml-3 text-xl font-bold text-white">{analysisResults.ai_insights.risk_score}%</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Key Concerns */}
+          {analysisResults.ai_insights.key_concerns && analysisResults.ai_insights.key_concerns.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-red-400 mb-2">⚠️ Key Concerns</h3>
+              <ul className="space-y-2">
+                {analysisResults.ai_insights.key_concerns.map((concern, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    <span className="text-gray-300">{concern}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Attack Indicators (MITRE) */}
+          {analysisResults.ai_insights.attack_indicators && analysisResults.ai_insights.attack_indicators.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-orange-400 mb-2">🎯 MITRE ATT&CK Indicators</h3>
+              <div className="flex flex-wrap gap-2">
+                {analysisResults.ai_insights.attack_indicators.map((indicator, idx) => (
+                  <span key={idx} className="bg-orange-900/50 border border-orange-500 px-3 py-1 rounded text-sm">
+                    <span className="font-mono text-orange-300">{indicator.technique}</span>
+                    <span className="text-gray-400 ml-2">{indicator.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Recommendations */}
+          {analysisResults.ai_insights.recommendations && analysisResults.ai_insights.recommendations.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-green-400 mb-2">✅ AI Recommendations</h3>
+              <ul className="space-y-2">
+                {analysisResults.ai_insights.recommendations.map((rec, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center mr-2 flex-shrink-0 text-xs font-bold">{idx + 1}</span>
+                    <span className="text-gray-300">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Investigation Priorities */}
+          {analysisResults.ai_insights.investigation_priorities && analysisResults.ai_insights.investigation_priorities.length > 0 && (
+            <div className="mt-4 bg-gray-800/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-400 mb-2">🔍 Investigation Priorities</h3>
+              <ol className="list-decimal list-inside space-y-1 text-gray-300">
+                {analysisResults.ai_insights.investigation_priorities.map((priority, idx) => (
+                  <li key={idx}>{priority}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Export Button */}
+      <button
+        onClick={handleExport}
+        className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition"
+      >
+        <Download className="h-5 w-5" />
+        <span>Download Forensic CSV Report</span>
+      </button>
+
+      {/* Warning */}
+      <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 flex items-start space-x-3">
+        <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold text-red-200">High-Risk System Detected</p>
+          <p className="text-sm text-red-300 mt-1">
+            This analysis indicates potential active compromise. Recommend immediate isolation and incident response activation.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

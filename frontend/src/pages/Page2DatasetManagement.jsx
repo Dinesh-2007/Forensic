@@ -6,7 +6,7 @@ import { Pie } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const API_BASE = 'http://localhost:5003/api';
+const API_BASE = 'http://localhost:5006/api';
 
 export default function Page2DatasetManagement() {
   const [datasets, setDatasets] = useState([]);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, AlertTriangle, Lock, CheckCircle, BarChart3, PieChart, TrendingUp, Shield, Activity } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5003/api';
+const API_BASE = 'http://localhost:5006/api';
 
 export default function Page1LiveScraping() {
   const [scrapeConfig, setScrapeConfig] = useState({
