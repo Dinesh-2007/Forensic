@@ -16,9 +16,40 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // Simple route mapping for sidebar pages
+  const pageRoutes = {
+    home: '/',
+    scrape: '/live-sentinel',
+    dataset: '/evidence-locker',
+    analysis: '/neural-engine'
+  };
+
+  // Sync initial page with current URL and listen to back/forward
   useEffect(() => {
     checkSystemHealth();
+
+    const syncFromLocation = () => {
+      const path = window.location.pathname || '/';
+      const entry = Object.entries(pageRoutes).find(([, routePath]) => routePath === path);
+      if (entry && entry[0] !== currentPage) {
+        setCurrentPage(entry[0]);
+      }
+    };
+
+    syncFromLocation();
+
+    window.addEventListener('popstate', syncFromLocation);
+    return () => window.removeEventListener('popstate', syncFromLocation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const navigateToPage = (pageId) => {
+    setCurrentPage(pageId);
+    const path = pageRoutes[pageId] || '/';
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+  };
 
   const checkSystemHealth = async () => {
     try {
@@ -77,7 +108,7 @@ export default function App() {
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => navigateToPage(item.id)}
               className={`w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 group relative
                 ${currentPage === item.id
                   ? 'bg-gradient-to-r from-cyan-500/10 to-blue-500/10 text-cyan-400 shadow-inner'
@@ -165,7 +196,7 @@ export default function App() {
         <main className="flex-1 overflow-auto relative">
          {/*<div className="max-w-7xl mx-auto animate-fade-in-up"> this one */}
          <div className="p-[9px]">
-            {currentPage === 'home' && <Dashboard setCurrentPage={setCurrentPage} />}
+            {currentPage === 'home' && <Dashboard setCurrentPage={navigateToPage} />}
             {currentPage === 'scrape' && <div className="glass-card rounded-2xl p-1"><Page1LiveScraping /></div>}
             {currentPage === 'dataset' && <div className="glass-card rounded-2xl p-1"><Page2DatasetManagement /></div>}
             {currentPage === 'analysis' && <div className="glass-card rounded-2xl p-1"><Page3AIForensicEngine /></div>}
@@ -516,111 +547,6 @@ function Dashboard({ setCurrentPage }) {
           delay="200"
           onClick={() => setCurrentPage('analysis')}
         />
-      </div>
-
-      {/* Forensic Parameter Explorer */}
-      <h3 className="text-lg font-semibold text-slate-300 mb-4 px-1 mt-8">Forensic Parameter Explorer 🔍</h3>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 rounded-2xl lg:col-span-1">
-          <p className="text-sm text-slate-400 mb-4">Click a layer to view main parameters and sub-parameters.</p>
-          <div className="space-y-2">
-            {forensicLayers.map(layer => (
-              <button
-                key={layer.id}
-                onClick={() => { setSelectedLayer(layer); /* navigate to Analysis page and open specific view */ setCurrentPage('analysis'); localStorage.setItem('analysis_view', layer.id); }}
-                className={`w-full text-left px-4 py-3 rounded-lg transition flex items-center justify-between ${selectedLayer?.id === layer.id ? 'bg-cyan-500/10 border border-cyan-500 text-cyan-300' : 'bg-slate-800/30 hover:bg-white/5'}`}
-              >
-                <div>
-                  <p className="text-sm font-semibold">{layer.title}</p>
-                  <p className="text-xs text-slate-400">{layer.subtitle}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 opacity-60" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="glass-panel p-6 rounded-2xl lg:col-span-2">
-          {!selectedLayer ? (
-            <div className="h-40 flex items-center justify-center text-slate-400">Select a forensic layer to view details and sub-parameters.</div>
-          ) : (
-            <div>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h4 className="text-xl font-bold text-white">{selectedLayer.title}</h4>
-                  <p className="text-sm text-slate-400">{selectedLayer.subtitle}</p>
-                </div>
-                <div className="text-right text-xs text-slate-400">
-                  <button onClick={() => { setSelectedLayer(null); }} className="text-cyan-400 hover:underline">Close</button>
-                </div>
-              </div>
-
-              <p className="text-sm text-slate-300 mb-4">{selectedLayer.details}</p>
-
-              <h5 className="text-sm font-semibold text-slate-300 mb-2">Main Parameters</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                {selectedLayer.mainParameters.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedSubParam({ name: p.name, description: p.description, example: p.example, why: p.description, visual: p.visual || null })}
-                    className="p-3 bg-slate-800/50 rounded-lg text-sm text-slate-200 text-left hover:bg-cyan-500/5 transition"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{p.name}</div>
-                        <div className="text-xs text-slate-400 mt-1">{p.description}</div>
-                      </div>
-                      <div className="text-xs text-slate-400 ml-4">{p.example}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <h5 className="text-sm font-semibold text-slate-300 mb-2">Sub-Parameters & Why they matter</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-400">
-                {selectedLayer.subParameters.length === 0 ? (
-                  <div className="p-3 bg-slate-800/40 rounded-lg">No sub-parameters for this layer.</div>
-                ) : (
-                  selectedLayer.subParameters.map((s, i) => (
-                    <button key={i} onClick={() => setSelectedSubParam({ name: s.name, description: s.why, example: s.example, why: s.why, visual: s.visual || null })} className="p-3 bg-slate-800/40 rounded-lg text-left hover:bg-white/5 transition">
-                      <div className="font-medium text-slate-200">{s.name}</div>
-                      <div className="text-xs text-slate-400 mt-1">{s.why}</div>
-                    </button>
-                  ))
-                )}
-              </div>
-
-              {/* Sub-parameter modal */}
-              {selectedSubParam && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedSubParam(null)}></div>
-                  <div className="bg-slate-900 rounded-2xl p-6 z-10 w-full max-w-2xl">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="text-lg font-bold text-white">{selectedSubParam.name}</h4>
-                        <p className="text-sm text-slate-400">{selectedSubParam.description}</p>
-                      </div>
-                      <button onClick={() => setSelectedSubParam(null)} className="text-cyan-400">Close</button>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h5 className="text-xs text-slate-400">Why it matters</h5>
-                        <p className="text-sm text-slate-300 mt-1">{selectedSubParam.why || '—'}</p>
-                      </div>
-                      <div>
-                        <h5 className="text-xs text-slate-400">Example value</h5>
-                        <pre className="mt-1 bg-slate-800 p-3 rounded text-xs text-slate-200">{selectedSubParam.example || 'N/A'}</pre>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 text-sm text-slate-400">{selectedSubParam.visual || ''}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

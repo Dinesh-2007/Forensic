@@ -275,14 +275,44 @@ export default function Page3AIForensicEngine() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Table */}
-            <div className="lg:col-span-2 overflow-auto">
-              <div className="bg-black/60 rounded text-sm font-mono p-3 mb-3">Terminal-style logs</div>
-              <div className="bg-slate-900 p-3 rounded mb-3" style={{height:120}}>
-                <Line data={getTimelineLine(eventMetadataRows)} options={smallChartOptions} />
+          {/* Parameter Mapping Guide */}
+          <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">📊 Visual Data Mapping</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 bg-blue-500 rounded"></span>
+                <span><span className="font-semibold">EventID</span> → TABLE</span>
               </div>
-              <table className="w-full text-sm font-mono bg-slate-900 rounded overflow-hidden">
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 bg-cyan-500 rounded"></span>
+                <span><span className="font-semibold">Timestamp</span> → TIMELINE</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 bg-purple-500 rounded"></span>
+                <span><span className="font-semibold">Source</span> → PIE CHART</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 bg-red-500 rounded"></span>
+                <span><span className="font-semibold">Level</span> → BADGE</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Table + Timeline */}
+            <div className="lg:col-span-2 overflow-auto">
+              <div className="bg-black/60 rounded text-sm font-mono p-3 mb-3">Terminal-style logs (Raw Parameter Data)</div>
+              
+              {/* Timeline Visualization (TIME-based) */}
+              <div className="bg-slate-900 p-3 rounded mb-4 border border-slate-700">
+                <h5 className="text-sm text-slate-300 mb-2">⏱️ Event Timeline (Time-based)</h5>
+                <div style={{height:120}}>
+                  <Line data={getTimelineLine(eventMetadataRows)} options={smallChartOptions} />
+                </div>
+              </div>
+
+              {/* Raw Data Table */}
+              <table className="w-full text-sm font-mono bg-slate-900 rounded overflow-hidden border border-slate-700">
                 <thead className="bg-slate-800 text-slate-300">
                   <tr>
                     <th className="p-2 text-left">EventID</th>
@@ -318,28 +348,90 @@ export default function Page3AIForensicEngine() {
               )}
             </div>
 
-            {/* Charts */}
+            {/* Visual Charts Panel */}
             <div className="space-y-4">
-              <div className="bg-slate-900 p-3 rounded">
-                <h5 className="text-sm text-slate-300 mb-2">EventID Frequency</h5>
-                <Bar data={getEventIDBar(eventMetadataRows)} options={smallChartOptions} />
+              {/* EventID Frequency - Bar Chart (COUNT-based) */}
+              <div className="bg-slate-900 p-4 rounded border border-slate-700">
+                <h5 className="text-sm text-slate-300 mb-2 flex items-center">
+                  <span className="w-3 h-3 bg-blue-500 rounded mr-2"></span>
+                  EventID Frequency (Bar Chart)
+                </h5>
+                <div style={{height: 150}}>
+                  <Bar data={getEventIDBar(eventMetadataRows)} options={smallChartOptions} />
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Shows count of each EventID type</p>
               </div>
 
-              <div className="bg-slate-900 p-3 rounded">
-                <h5 className="text-sm text-slate-300 mb-2">Log Sources (Pie)</h5>
-                <Pie data={getSourcePie(eventMetadataRows)} options={smallChartOptions} />
+              {/* Log Sources - Pie Chart (PROPORTION-based) */}
+              <div className="bg-slate-900 p-4 rounded border border-slate-700">
+                <h5 className="text-sm text-slate-300 mb-2 flex items-center">
+                  <span className="w-3 h-3 bg-purple-500 rounded mr-2"></span>
+                  Log Sources Distribution (Pie Chart)
+                </h5>
+                <div style={{height: 150}}>
+                  <Pie data={getSourcePie(eventMetadataRows)} options={smallChartOptions} />
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Proportion of events per log source</p>
               </div>
 
-              <div className="bg-slate-900 p-3 rounded">
-                <h5 className="text-sm text-slate-300 mb-2">Severity Heatmap (Counts)</h5>
-                <Bar data={getSeverityBar(eventMetadataRows)} options={smallChartOptions} />
+              {/* Severity Levels - Bar Chart (INTENSITY/FREQUENCY) */}
+              <div className="bg-slate-900 p-4 rounded border border-slate-700">
+                <h5 className="text-sm text-slate-300 mb-2 flex items-center">
+                  <span className="w-3 h-3 bg-red-500 rounded mr-2"></span>
+                  Severity Level Distribution (Bar Chart)
+                </h5>
+                <div style={{height: 150}}>
+                  <Bar data={getSeverityBar(eventMetadataRows)} options={smallChartOptions} />
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Event count by severity level</p>
               </div>
 
+              {/* Quick Stats - Badges (BOOLEAN/SUMMARY) */}
+              <div className="bg-slate-900 p-4 rounded border border-slate-700">
+                <h5 className="text-sm text-slate-300 mb-3">📈 Quick Stats</h5>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-xs text-slate-400">Total Events</span>
+                    <span className="text-lg font-bold text-cyan-400">{eventMetadataRows.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-xs text-slate-400">Critical Events</span>
+                    <span className="text-lg font-bold text-red-400">{eventMetadataRows.filter(e => e.Level === 'Critical').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-xs text-slate-400">Unique Sources</span>
+                    <span className="text-lg font-bold text-purple-400">{new Set(eventMetadataRows.map(e => e.Source)).size}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-xs text-slate-400">Unique EventIDs</span>
+                    <span className="text-lg font-bold text-blue-400">{new Set(eventMetadataRows.map(e => e.EventID)).size}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 text-sm text-slate-400">
-            <p>Visuals: Bar chart → EventID frequency. Pie chart → Log sources. Timeline line chart → Event density over time. Color heatmap → Severity (red = critical).</p>
+          {/* Legend & Documentation */}
+          <div className="mt-6 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">📋 Visualization Explanation</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+              <div>
+                <p className="font-semibold text-slate-300 mb-1">Raw Data (Table)</p>
+                <p>Shows all event metadata parameters in tabular form for detailed inspection and filtering</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-300 mb-1">Timeline (Line Chart)</p>
+                <p>Time-based visualization showing event density over days, helps identify temporal patterns</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-300 mb-1">Frequency (Bar Chart)</p>
+                <p>Count-based visualization of EventIDs and Severity levels showing distribution patterns</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-300 mb-1">Proportions (Pie Chart)</p>
+                <p>Shows percentage distribution of log sources for quick overview of event origins</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
